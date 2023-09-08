@@ -4,9 +4,9 @@ import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase
 import './Register.css';
 
 const Register = () => {
-  const [username, setUsername] = useState(''); 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState<string>(''); 
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,7 +27,6 @@ const Register = () => {
       alert('登録失敗');
   }
 };
-
 
   return (
     <div className='register-container'>
