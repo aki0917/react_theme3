@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
-import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { app} from '../../firebaseConfig';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import '../../styles/main.css';
+
 
 const Register = () => {
   const [username, setUsername] = useState<string>(''); 
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
+  const navigate = useNavigate();
+
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const auth = getAuth();
+    const auth = getAuth(app);
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -22,6 +27,8 @@ const Register = () => {
         });
         console.log(user.displayName);
         alert('登録完了');
+
+        navigate('/dashboard');
       }
     } catch (error) { 
       alert('登録失敗');
@@ -64,7 +71,7 @@ const Register = () => {
         </div>
         <button type='submit' className="submit-btn">新規登録</button>
       </form>
-      <p className="login-link">ログインは<a href="">こちらから</a></p>
+      <p className="login-link">ログインは<Link to="/login">こちらから</Link></p>
     </div>
   );
 };
