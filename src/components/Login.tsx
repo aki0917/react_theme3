@@ -1,10 +1,14 @@
 import React ,{ useState } from 'react';
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import '../styles/main.css';
 
 const Login = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -13,6 +17,7 @@ const Login = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       alert('ログインしました');
+      navigate('/dashboard');
     } catch (error) {
       let errorMessage = 'ログイン失敗';
 
@@ -62,7 +67,7 @@ const Login = () => {
         </div>
         <button type='submit' className='submit-btn'>ログイン</button>
       </form>
-      <p className="login-link">新規登録は<a href="">こちらから</a></p>
+      <p className="login-link">新規登録は<Link to="/">こちらから</Link></p>
     </div>
   );
 };
