@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getFirestore, collection, setDoc, doc } from 'firebase/firestore';
 import { app} from '../../firebaseConfig';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import '../../styles/main.css';
@@ -16,6 +17,7 @@ const Register = () => {
     e.preventDefault();
 
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -25,15 +27,24 @@ const Register = () => {
         await updateProfile(user, {
           displayName: username,
         });
+
+        const usersCollection = collection(db, 'users');
+        const userId = user.uid;
+        const userDocRef = doc(usersCollection, userId);
+        await setDoc(userDocRef, {
+          username: username,
+          wallet: 0, 
+        });
+
         console.log(user.displayName);
         alert('登録完了');
-
         navigate('/dashboard');
       }
     } catch (error) { 
+      console.error("Error registering user:", error);
       alert('登録失敗');
-  }
-};
+    }
+  };
 
   return (
     <div className='register-container'>
