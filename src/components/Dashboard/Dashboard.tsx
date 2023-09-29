@@ -3,6 +3,9 @@ import { getAuth } from "firebase/auth";
 import { getFirestore, collection, getDocs, doc } from "firebase/firestore";
 import { onSnapshot, DocumentSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import WalletModal from "../WalletModal/WalletModal";
+import UserList from "../UserList/UserList";
+import SendMoneyModal from "../SendMoneyModal/SendMoneyModal";
 import "../../styles/main.css";
 
 type User = {
@@ -19,8 +22,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const auth = getAuth();
   const currentUserId = auth.currentUser?.uid;
-  const [ isModalOpen, setIsModalOpen ] = useState(false);
+  const [isModalOpen, setIsModalOpen ] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isSendMoneyModalOpen, setIsSendMoneyModalOpen] = useState(false);
+  const [selectedReceiver, setSelectedReceiver] = useState<User | null>(null);
+  const [isTipFunctionVisible, setIsTipFunctionVisible] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -47,11 +53,20 @@ const Dashboard = () => {
     };
     fetchData();
   }, [currentUserId]);
-  
-  useEffect(() => {
-    console.log("Updated Users State:", users);
-  }, [users]);
 
+  useEffect(() => {
+    const db = getFirestore();
+    const usersCollection = collection(db, "users");
+
+    const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
+      const updatedUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(user => user.id !== currentUserId);
+      setUsers(updatedUsers);
+    });
+
+    return () => unsubscribe();
+  }, [currentUserId]);
+  
   useEffect(() => { 
     if (currentUserId) {
       const db = getFirestore();
@@ -66,9 +81,16 @@ const Dashboard = () => {
     }
   });
 
-  const handleWalletCheck = (user:User) => {
+  const handleUserClick = (user: User) => { 
     setSelectedUser(user);
     setIsModalOpen(true);
+    setIsTipFunctionVisible(false);
+  };
+
+  const handleSendMoneyClick = (user: User) => {
+    setSelectedReceiver(user);
+    setIsSendMoneyModalOpen(true);
+    setIsTipFunctionVisible(true);
   };
 
   const handleLogout = async () => {
@@ -93,25 +115,28 @@ const Dashboard = () => {
       </div>
       <p>ユーザー名: {username}</p>
       <p>ウォレット残高: {wallet}円</p>
-      <div className="users-list">
-        <h3>ユーザー一覧</h3>
-        <ul>
-          {users.map(user => (
-            <li key={user.id} className="user-item">
-              <p className="username">ユーザー名: {user.username}</p>
-              <button onClick={() => handleWalletCheck(user)}>ウォレット確認</button>
-            </li>
-          ))}
-        </ul>
-      </div>
+
+      <UserList users={users} onUserClick={handleUserClick} onSendMoneyClick={handleSendMoneyClick} />
+      
       {isModalOpen && selectedUser && (
-        <>
-          <div className="overlay" onClick={() => setIsModalOpen(false)}></div>
-          <div className="modal">
-            <p>{selectedUser.username}のウォレット残高: {selectedUser.wallet}円</p>
-            <button onClick={() => setIsModalOpen(false)}>閉じる</button>
-          </div>
-        </>
+        <WalletModal
+          username={selectedUser.username}
+          walletBalance={selectedUser.wallet}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
+    
+      {isSendMoneyModalOpen && selectedReceiver && currentUserId && (
+        <SendMoneyModal
+        senderId={currentUserId}
+        receiverId={selectedReceiver.id}
+        onClose={() => setIsSendMoneyModalOpen(false)}
+        onSendMoney={(amount) => {
+          if (amount > 0) {
+            alert(`${amount}円送金しました`);
+          }
+        }}
+      />
       )}
     </div>
   );
